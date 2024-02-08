@@ -1,21 +1,21 @@
-var express = require("express");
-var request = require("sync-request");
-var url = require("url");
-var qs = require("qs");
-var querystring = require('querystring');
-var cons = require('consolidate');
-var randomstring = require("randomstring");
-var __ = require('underscore');
+const express = require("express");
+const request = require("sync-request");
+const url = require("url");
+const qs = require("qs");
+const querystring = require('querystring');
+const cons = require('consolidate');
+const randomstring = require("randomstring");
+const __ = require('underscore');
 __.string = require('underscore.string');
 
-var app = express();
+const app = express();
 
 app.engine('html', cons.underscore);
 app.set('view engine', 'html');
 app.set('views', 'files/client');
 
 // authorization server information
-var authServer = {
+const authServer = {
 	authorizationEndpoint: 'http://localhost:9001/authorize',
 	tokenEndpoint: 'http://localhost:9001/token'
 };
@@ -26,15 +26,15 @@ var authServer = {
 /*
  * Add the client information in here
  */
-var client = {
-	"client_id": "",
+const client = {
+	"client_id": "oauth-client-1",
 	"client_secret": "",
 	"redirect_uris": ["http://localhost:9000/callback"]
 };
 
-var protectedResource = 'http://localhost:9002/resource';
+const protectedResource = 'http://localhost:9002/resource';
 
-var state = null;
+const state = null;
 
 var access_token = null;
 var scope = null;
@@ -44,11 +44,12 @@ app.get('/', function (req, res) {
 });
 
 app.get('/authorize', function(req, res){
-
-	/*
-	 * Send the user to the authorization server
-	 */
-	
+	const authorizeUrl = buildUrl(authServer.authorizationEndpoint, {
+		response_type: 'code',
+		client_id: client.client_id,
+		redirect_uri: client.redirect_uris[0]
+	});
+	res.redirect(authorizeUrl);
 });
 
 app.get('/callback', function(req, res){
@@ -60,15 +61,10 @@ app.get('/callback', function(req, res){
 });
 
 app.get('/fetch_resource', function(req, res) {
-
-	/*
-	 * Use the access token to call the resource server
-	 */
-	
 });
 
-var buildUrl = function(base, options, hash) {
-	var newUrl = url.parse(base, true);
+const buildUrl = function(base, options, hash) {
+	const newUrl = url.parse(base, true);
 	delete newUrl.search;
 	if (!newUrl.query) {
 		newUrl.query = {};
@@ -83,15 +79,15 @@ var buildUrl = function(base, options, hash) {
 	return url.format(newUrl);
 };
 
-var encodeClientCredentials = function(clientId, clientSecret) {
+const encodeClientCredentials = function(clientId, clientSecret) {
 	return Buffer.from(querystring.escape(clientId) + ':' + querystring.escape(clientSecret)).toString('base64');
 };
 
 app.use('/', express.static('files/client'));
 
-var server = app.listen(9000, 'localhost', function () {
-  var host = server.address().address;
-  var port = server.address().port;
+const server = app.listen(9000, 'localhost', function () {
+  const host = server.address().address;
+  const port = server.address().port;
   console.log('OAuth Client is listening at http://%s:%s', host, port);
 });
  
