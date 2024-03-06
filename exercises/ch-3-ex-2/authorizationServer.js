@@ -38,17 +38,13 @@ var codes = {};
 
 var requests = {};
 
-var getClient = function (clientId) {
-	return __.find(clients, function (client) {
-		return client.client_id == clientId;
-	});
-};
+var getClient = (clientId) => __.find(clients, (client) => client.client_id == clientId);
 
-app.get("/", function (req, res) {
+app.get("/", (req, res) => {
 	res.render("index", { clients: clients, authServer: authServer });
 });
 
-app.get("/authorize", function (req, res) {
+app.get("/authorize", (req, res) => {
 	var client = getClient(req.query.client_id);
 
 	if (!client) {
@@ -85,7 +81,7 @@ app.get("/authorize", function (req, res) {
 	}
 });
 
-app.post("/approve", function (req, res) {
+app.post("/approve", (req, res) => {
 	var reqid = req.body.reqid;
 	var query = requests[reqid];
 	delete requests[reqid];
@@ -103,11 +99,7 @@ app.post("/approve", function (req, res) {
 
 			var user = req.body.user;
 
-			var scope = __.filter(__.keys(req.body), function (s) {
-				return __.string.startsWith(s, "scope_");
-			}).map(function (s) {
-				return s.slice("scope_".length);
-			});
+			var scope = __.filter(__.keys(req.body), (s) => __.string.startsWith(s, "scope_")).map((s) => s.slice("scope_".length));
 			var client = getClient(query.client_id);
 			var cscope = client.scope ? client.scope.split(" ") : undefined;
 			if (__.difference(scope, cscope).length > 0) {
@@ -154,7 +146,7 @@ app.post("/approve", function (req, res) {
 	}
 });
 
-app.post("/token", function (req, res) {
+app.post("/token", (req, res) => {
 	var auth = req.headers["authorization"];
 	if (auth) {
 		// check the auth header
@@ -242,9 +234,9 @@ app.post("/token", function (req, res) {
 			return;
 		}
 	} else if (req.body.grant_type == "refresh_token") {
-		nosql.find().make(function (builder) {
+		nosql.find().make((builder) => {
 			builder.where("refresh_token", req.body.refresh_token);
-			builder.callback(function (err, tokens) {
+			builder.callback((err, tokens) => {
 				if (tokens.length == 1) {
 					var token = tokens[0];
 					if (token.client_id != clientId) {
@@ -253,7 +245,7 @@ app.post("/token", function (req, res) {
 							token.client_id,
 							clientId,
 						);
-						nosql.remove().make(function (builder) {
+						nosql.remove().make((builder) => {
 							builder.where("refresh_token", req.body.refresh_token);
 						});
 						res.status(400).end();
@@ -304,7 +296,7 @@ setTimeout(
 	5000,
 );
 
-var server = app.listen(9001, "localhost", function () {
+var server = app.listen(9001, "localhost", () => {
 	var host = server.address().address;
 	var port = server.address().port;
 

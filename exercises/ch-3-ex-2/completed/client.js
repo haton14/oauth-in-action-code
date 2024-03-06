@@ -37,7 +37,7 @@ var access_token = "987tghjkiu6trfghjuytrghj";
 var scope = null;
 var refresh_token = "j2r3oj32r23rmasd98uhjrk2o3i";
 
-app.get("/", function (req, res) {
+app.get("/", (req, res) => {
 	res.render("index", {
 		access_token: access_token,
 		scope: scope,
@@ -45,7 +45,7 @@ app.get("/", function (req, res) {
 	});
 });
 
-app.get("/authorize", function (req, res) {
+app.get("/authorize", (req, res) => {
 	access_token = null;
 	scope = null;
 	state = randomstring.generate();
@@ -62,7 +62,7 @@ app.get("/authorize", function (req, res) {
 	res.redirect(authorizeUrl);
 });
 
-app.get("/callback", function (req, res) {
+app.get("/callback", (req, res) => {
 	if (req.query.error) {
 		// it's an error response, act accordingly
 		res.render("error", { error: req.query.error });
@@ -127,7 +127,7 @@ app.get("/callback", function (req, res) {
 	}
 });
 
-app.get("/fetch_resource", function (req, res) {
+app.get("/fetch_resource", (req, res) => {
 	console.log("Making request with access token %s", access_token);
 
 	var headers = {
@@ -153,7 +153,7 @@ app.get("/fetch_resource", function (req, res) {
 	}
 });
 
-var refreshAccessToken = function (req, res) {
+var refreshAccessToken = (req, res) => {
 	var form_data = qs.stringify({
 		grant_type: "refresh_token",
 		refresh_token: refresh_token,
@@ -193,13 +193,13 @@ var refreshAccessToken = function (req, res) {
 	}
 };
 
-var buildUrl = function (base, options, hash) {
+var buildUrl = (base, options, hash) => {
 	var newUrl = url.parse(base, true);
 	delete newUrl.search;
 	if (!newUrl.query) {
 		newUrl.query = {};
 	}
-	__.each(options, function (value, key, list) {
+	__.each(options, (value, key, list) => {
 		newUrl.query[key] = value;
 	});
 	if (hash) {
@@ -209,15 +209,13 @@ var buildUrl = function (base, options, hash) {
 	return url.format(newUrl);
 };
 
-var encodeClientCredentials = function (clientId, clientSecret) {
-	return Buffer.from(
+var encodeClientCredentials = (clientId, clientSecret) => Buffer.from(
 		querystring.escape(clientId) + ":" + querystring.escape(clientSecret),
 	).toString("base64");
-};
 
 app.use("/", express.static("files/client"));
 
-var server = app.listen(9000, "localhost", function () {
+var server = app.listen(9000, "localhost", () => {
 	var host = server.address().address;
 	var port = server.address().port;
 	console.log("OAuth Client is listening at http://%s:%s", host, port);

@@ -21,7 +21,7 @@ var resource = {
 	description: "This data has been protected by OAuth 2.0",
 };
 
-var getAccessToken = function (req, res, next) {
+var getAccessToken = (req, res, next) => {
 	// check the auth header first
 	var auth = req.headers["authorization"];
 	var inToken = null;
@@ -35,9 +35,9 @@ var getAccessToken = function (req, res, next) {
 	}
 
 	console.log("Incoming token: %s", inToken);
-	nosql.one().make(function (builder) {
+	nosql.one().make((builder) => {
 		builder.where("access_token", inToken);
-		builder.callback(function (err, token) {
+		builder.callback((err, token) => {
 			if (token) {
 				console.log("We found a matching token: %s", inToken);
 			} else {
@@ -51,7 +51,7 @@ var getAccessToken = function (req, res, next) {
 };
 
 app.options("/resource", cors());
-app.post("/resource", cors(), getAccessToken, function (req, res) {
+app.post("/resource", cors(), getAccessToken, (req, res) => {
 	if (req.access_token) {
 		res.json(resource);
 	} else {
@@ -59,7 +59,7 @@ app.post("/resource", cors(), getAccessToken, function (req, res) {
 	}
 });
 
-var server = app.listen(9002, "localhost", function () {
+var server = app.listen(9002, "localhost", () => {
 	var host = server.address().address;
 	var port = server.address().port;
 
