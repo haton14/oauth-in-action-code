@@ -1,41 +1,41 @@
-var express = require("express");
-var request = require("sync-request");
-var url = require("url");
-var qs = require("qs");
-var querystring = require("querystring");
-var cons = require("consolidate");
-var randomstring = require("randomstring");
-var __ = require("underscore");
+const express = require("express");
+const request = require("sync-request");
+const url = require("url");
+const qs = require("qs");
+const querystring = require("querystring");
+const cons = require("consolidate");
+const randomstring = require("randomstring");
+const __ = require("underscore");
 __.string = require("underscore.string");
 
-var app = express();
+const app = express();
 
 app.engine("html", cons.underscore);
 app.set("view engine", "html");
 app.set("views", "files/client");
 
 // authorization server information
-var authServer = {
+const authServer = {
 	authorizationEndpoint: "http://localhost:9001/authorize",
 	tokenEndpoint: "http://localhost:9001/token",
 };
 
 // client information
 
-var client = {
+const client = {
 	client_id: "oauth-client-1",
 	client_secret: "oauth-client-secret-1",
 	redirect_uris: ["http://localhost:9000/callback"],
 	scope: "foo",
 };
 
-var protectedResource = "http://localhost:9002/resource";
+const protectedResource = "http://localhost:9002/resource";
 
-var state = null;
+let state = null;
 
-var access_token = "987tghjkiu6trfghjuytrghj";
-var scope = null;
-var refresh_token = "j2r3oj32r23rmasd98uhjrk2o3i";
+let access_token = "987tghjkiu6trfghjuytrghj";
+let scope = null;
+let refresh_token = "j2r3oj32r23rmasd98uhjrk2o3i";
 
 app.get("/", (req, res) => {
 	res.render("index", {
@@ -50,7 +50,7 @@ app.get("/authorize", (req, res) => {
 	scope = null;
 	state = randomstring.generate();
 
-	var authorizeUrl = buildUrl(authServer.authorizationEndpoint, {
+	const authorizeUrl = buildUrl(authServer.authorizationEndpoint, {
 		response_type: "code",
 		scope: client.scope,
 		client_id: client.client_id,
@@ -69,32 +69,29 @@ app.get("/callback", (req, res) => {
 		return;
 	}
 
-	var resState = req.query.state;
-	if (resState != state) {
+	const resState = req.query.state;
+	if (resState !== state) {
 		console.log("State DOES NOT MATCH: expected %s got %s", state, resState);
 		res.render("error", { error: "State value did not match" });
 		return;
 	}
 
-	var code = req.query.code;
+	const code = req.query.code;
 
-	var form_data = qs.stringify({
+	const form_data = qs.stringify({
 		grant_type: "authorization_code",
 		code: code,
 		redirect_uri: client.redirect_uris[0],
 	});
-	var headers = {
+	const headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
 		Authorization:
-			"Basic " +
-			Buffer.from(
-				querystring.escape(client.client_id) +
-					":" +
-					querystring.escape(client.client_secret),
-			).toString("base64"),
+			`Basic ${Buffer.from(
+				`${querystring.escape(client.client_id)}:${querystring.escape(client.client_secret)}`,
+			).toString("base64")}`,
 	};
 
-	var tokRes = request("POST", authServer.tokenEndpoint, {
+	const tokRes = request("POST", authServer.tokenEndpoint, {
 		body: form_data,
 		headers: headers,
 	});
@@ -102,7 +99,7 @@ app.get("/callback", (req, res) => {
 	console.log("Requesting access token for code %s", code);
 
 	if (tokRes.statusCode >= 200 && tokRes.statusCode < 300) {
-		var body = JSON.parse(tokRes.getBody());
+		const body = JSON.parse(tokRes.getBody());
 
 		access_token = body.access_token;
 		console.log("Got access token: %s", access_token);
@@ -122,7 +119,7 @@ app.get("/callback", (req, res) => {
 	} else {
 		res.render("error", {
 			error:
-				"Unable to fetch access token, server response: " + tokRes.statusCode,
+				`Unable to fetch access token, server response: ${tokRes.statusCode}`,
 		});
 	}
 });
@@ -130,47 +127,44 @@ app.get("/callback", (req, res) => {
 app.get("/fetch_resource", (req, res) => {
 	console.log("Making request with access token %s", access_token);
 
-	var headers = {
-		Authorization: "Bearer " + access_token,
+	const headers = {
+		Authorization: `Bearer ${access_token}`,
 		"Content-Type": "application/x-www-form-urlencoded",
 	};
 
-	var resource = request("POST", protectedResource, { headers: headers });
+	const resource = request("POST", protectedResource, { headers: headers });
 
 	if (resource.statusCode >= 200 && resource.statusCode < 300) {
-		var body = JSON.parse(resource.getBody());
+		const body = JSON.parse(resource.getBody());
 		res.render("data", { resource: body });
 		return;
-	} else {
+	}
 		access_token = null;
 		if (refresh_token) {
 			refreshAccessToken(req, res);
 			return;
-		} else {
+		}
 			res.render("error", { error: resource.statusCode });
 			return;
-		}
-	}
 });
 
-var refreshAccessToken = (req, res) => {
-	var form_data = qs.stringify({
+const refreshAccessToken = (req, res) => {
+	const form_data = qs.stringify({
 		grant_type: "refresh_token",
 		refresh_token: refresh_token,
 	});
-	var headers = {
+	const headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
 		Authorization:
-			"Basic " +
-			encodeClientCredentials(client.client_id, client.client_secret),
+			`Basic ${encodeClientCredentials(client.client_id, client.client_secret)}`,
 	};
 	console.log("Refreshing token %s", refresh_token);
-	var tokRes = request("POST", authServer.tokenEndpoint, {
+	const tokRes = request("POST", authServer.tokenEndpoint, {
 		body: form_data,
 		headers: headers,
 	});
 	if (tokRes.statusCode >= 200 && tokRes.statusCode < 300) {
-		var body = JSON.parse(tokRes.getBody());
+		const body = JSON.parse(tokRes.getBody());
 
 		access_token = body.access_token;
 		console.log("Got access token: %s", access_token);
@@ -184,18 +178,17 @@ var refreshAccessToken = (req, res) => {
 		// try again
 		res.redirect("/fetch_resource");
 		return;
-	} else {
+	}
 		console.log("No refresh token, asking the user to get a new access token");
 		// tell the user to get a new access token
 		refresh_token = null;
 		res.render("error", { error: "Unable to refresh token." });
 		return;
-	}
 };
 
-var buildUrl = (base, options, hash) => {
-	var newUrl = url.parse(base, true);
-	delete newUrl.search;
+const buildUrl = (base, options, hash) => {
+	const newUrl = url.parse(base, true);
+	newUrl.search = undefined;
 	if (!newUrl.query) {
 		newUrl.query = {};
 	}
@@ -209,14 +202,14 @@ var buildUrl = (base, options, hash) => {
 	return url.format(newUrl);
 };
 
-var encodeClientCredentials = (clientId, clientSecret) => Buffer.from(
-		querystring.escape(clientId) + ":" + querystring.escape(clientSecret),
+const encodeClientCredentials = (clientId, clientSecret) => Buffer.from(
+		`${querystring.escape(clientId)}:${querystring.escape(clientSecret)}`,
 	).toString("base64");
 
 app.use("/", express.static("files/client"));
 
-var server = app.listen(9000, "localhost", () => {
-	var host = server.address().address;
-	var port = server.address().port;
+const server = app.listen(9000, "localhost", () => {
+	const host = server.address().address;
+	const port = server.address().port;
 	console.log("OAuth Client is listening at http://%s:%s", host, port);
 });
