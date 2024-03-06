@@ -78,6 +78,20 @@ app.get('/callback', (req, res)=> {
 });
 
 app.get('/fetch_resource', (req, res) => {
+	if (!access_token) {
+		res.render('error', {error: 'missing access token'});
+		return;
+	}
+	const headers = {
+		Authorization: `Bearer ${access_token}`
+	};
+	const resource = request('POST', protectedResource, {headers: headers});
+	if (resource.statusCode >= 200 && resource.statusCode < 300) {
+		const body = JSON.parse(resource.getBody());
+		res.render('data', {resource: body});
+		return;
+	}
+	res.render('error', {error: resource.statusCode});
 });
 
 const buildUrl = (base, options, hash) => {
