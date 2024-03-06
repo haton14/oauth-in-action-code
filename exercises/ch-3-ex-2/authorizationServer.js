@@ -38,7 +38,8 @@ const codes = {};
 
 const requests = {};
 
-const getClient = (clientId) => __.find(clients, (client) => client.client_id === clientId);
+const getClient = (clientId) =>
+	__.find(clients, (client) => client.client_id === clientId);
 
 app.get("/", (req, res) => {
 	res.render("index", { clients: clients, authServer: authServer });
@@ -51,7 +52,8 @@ app.get("/authorize", (req, res) => {
 		console.log("Unknown client %s", req.query.client_id);
 		res.render("error", { error: "Unknown client" });
 		return;
-	}if (!__.contains(client.redirect_uris, req.query.redirect_uri)) {
+	}
+	if (!__.contains(client.redirect_uris, req.query.redirect_uri)) {
 		console.log(
 			"Mismatched redirect URI, expected %s got %s",
 			client.redirect_uris,
@@ -60,24 +62,24 @@ app.get("/authorize", (req, res) => {
 		res.render("error", { error: "Invalid redirect URI" });
 		return;
 	}
-		const rscope = req.query.scope ? req.query.scope.split(" ") : undefined;
-		const cscope = client.scope ? client.scope.split(" ") : undefined;
-		if (__.difference(rscope, cscope).length > 0) {
-			// client asked for a scope it couldn't have
-			const urlParsed = url.parse(req.query.redirect_uri);
-			urlParsed.search = undefined; // this is a weird behavior of the URL library
-			urlParsed.query = urlParsed.query || {};
-			urlParsed.query.error = "invalid_scope";
-			res.redirect(url.format(urlParsed));
-			return;
-		}
-
-		const reqid = randomstring.generate(8);
-
-		requests[reqid] = req.query;
-
-		res.render("approve", { client: client, reqid: reqid, scope: rscope });
+	const rscope = req.query.scope ? req.query.scope.split(" ") : undefined;
+	const cscope = client.scope ? client.scope.split(" ") : undefined;
+	if (__.difference(rscope, cscope).length > 0) {
+		// client asked for a scope it couldn't have
+		const urlParsed = url.parse(req.query.redirect_uri);
+		urlParsed.search = undefined; // this is a weird behavior of the URL library
+		urlParsed.query = urlParsed.query || {};
+		urlParsed.query.error = "invalid_scope";
+		res.redirect(url.format(urlParsed));
 		return;
+	}
+
+	const reqid = randomstring.generate(8);
+
+	requests[reqid] = req.query;
+
+	res.render("approve", { client: client, reqid: reqid, scope: rscope });
+	return;
 });
 
 app.post("/approve", (req, res) => {
@@ -98,7 +100,9 @@ app.post("/approve", (req, res) => {
 
 			const user = req.body.user;
 
-			const scope = __.filter(__.keys(req.body), (s) => __.string.startsWith(s, "scope_")).map((s) => s.slice("scope_".length));
+			const scope = __.filter(__.keys(req.body), (s) =>
+				__.string.startsWith(s, "scope_"),
+			).map((s) => s.slice("scope_".length));
 			const client = getClient(query.client_id);
 			const cscope = client.scope ? client.scope.split(" ") : undefined;
 			if (__.difference(scope, cscope).length > 0) {
@@ -126,21 +130,21 @@ app.post("/approve", (req, res) => {
 			res.redirect(url.format(urlParsed));
 			return;
 		}
-			// we got a response type we don't understand
-			const urlParsed = url.parse(query.redirect_uri);
-			urlParsed.search = undefined; // this is a weird behavior of the URL library
-			urlParsed.query = urlParsed.query || {};
-			urlParsed.query.error = "unsupported_response_type";
-			res.redirect(url.format(urlParsed));
-			return;
-	}
-		// user denied access
+		// we got a response type we don't understand
 		const urlParsed = url.parse(query.redirect_uri);
 		urlParsed.search = undefined; // this is a weird behavior of the URL library
 		urlParsed.query = urlParsed.query || {};
-		urlParsed.query.error = "access_denied";
+		urlParsed.query.error = "unsupported_response_type";
 		res.redirect(url.format(urlParsed));
 		return;
+	}
+	// user denied access
+	const urlParsed = url.parse(query.redirect_uri);
+	urlParsed.search = undefined; // this is a weird behavior of the URL library
+	urlParsed.query = urlParsed.query || {};
+	urlParsed.query.error = "access_denied";
+	res.redirect(url.format(urlParsed));
+	return;
 });
 
 app.post("/token", (req, res) => {
@@ -217,18 +221,19 @@ app.post("/token", (req, res) => {
 
 				return;
 			}
-				console.log(
-					"Client mismatch, expected %s got %s",
-					code.authorizationEndpointRequest.client_id,
-					clientId,
-				);
-				res.status(400).json({ error: "invalid_grant" });
-				return;
-		}
-			console.log("Unknown code, %s", req.body.code);
+			console.log(
+				"Client mismatch, expected %s got %s",
+				code.authorizationEndpointRequest.client_id,
+				clientId,
+			);
 			res.status(400).json({ error: "invalid_grant" });
 			return;
-	}if (req.body.grant_type === "refresh_token") {
+		}
+		console.log("Unknown code, %s", req.body.code);
+		res.status(400).json({ error: "invalid_grant" });
+		return;
+	}
+	if (req.body.grant_type === "refresh_token") {
 		nosql.find().make((builder) => {
 			builder.where("refresh_token", req.body.refresh_token);
 			builder.callback((err, tokens) => {
@@ -265,8 +270,8 @@ app.post("/token", (req, res) => {
 					res.status(200).json(token_response);
 					return;
 				}
-					console.log("No matching token was found.");
-					res.status(401).end();
+				console.log("No matching token was found.");
+				res.status(401).end();
 			});
 		});
 	} else {

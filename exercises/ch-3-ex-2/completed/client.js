@@ -85,10 +85,11 @@ app.get("/callback", (req, res) => {
 	});
 	const headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
-		Authorization:
-			`Basic ${Buffer.from(
-				`${querystring.escape(client.client_id)}:${querystring.escape(client.client_secret)}`,
-			).toString("base64")}`,
+		Authorization: `Basic ${Buffer.from(
+			`${querystring.escape(client.client_id)}:${querystring.escape(
+				client.client_secret,
+			)}`,
+		).toString("base64")}`,
 	};
 
 	const tokRes = request("POST", authServer.tokenEndpoint, {
@@ -118,8 +119,7 @@ app.get("/callback", (req, res) => {
 		});
 	} else {
 		res.render("error", {
-			error:
-				`Unable to fetch access token, server response: ${tokRes.statusCode}`,
+			error: `Unable to fetch access token, server response: ${tokRes.statusCode}`,
 		});
 	}
 });
@@ -139,13 +139,13 @@ app.get("/fetch_resource", (req, res) => {
 		res.render("data", { resource: body });
 		return;
 	}
-		access_token = null;
-		if (refresh_token) {
-			refreshAccessToken(req, res);
-			return;
-		}
-			res.render("error", { error: resource.statusCode });
-			return;
+	access_token = null;
+	if (refresh_token) {
+		refreshAccessToken(req, res);
+		return;
+	}
+	res.render("error", { error: resource.statusCode });
+	return;
 });
 
 const refreshAccessToken = (req, res) => {
@@ -155,8 +155,10 @@ const refreshAccessToken = (req, res) => {
 	});
 	const headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
-		Authorization:
-			`Basic ${encodeClientCredentials(client.client_id, client.client_secret)}`,
+		Authorization: `Basic ${encodeClientCredentials(
+			client.client_id,
+			client.client_secret,
+		)}`,
 	};
 	console.log("Refreshing token %s", refresh_token);
 	const tokRes = request("POST", authServer.tokenEndpoint, {
@@ -179,11 +181,11 @@ const refreshAccessToken = (req, res) => {
 		res.redirect("/fetch_resource");
 		return;
 	}
-		console.log("No refresh token, asking the user to get a new access token");
-		// tell the user to get a new access token
-		refresh_token = null;
-		res.render("error", { error: "Unable to refresh token." });
-		return;
+	console.log("No refresh token, asking the user to get a new access token");
+	// tell the user to get a new access token
+	refresh_token = null;
+	res.render("error", { error: "Unable to refresh token." });
+	return;
 };
 
 const buildUrl = (base, options, hash) => {
@@ -202,7 +204,8 @@ const buildUrl = (base, options, hash) => {
 	return url.format(newUrl);
 };
 
-const encodeClientCredentials = (clientId, clientSecret) => Buffer.from(
+const encodeClientCredentials = (clientId, clientSecret) =>
+	Buffer.from(
 		`${querystring.escape(clientId)}:${querystring.escape(clientSecret)}`,
 	).toString("base64");
 

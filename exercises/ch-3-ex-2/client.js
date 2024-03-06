@@ -85,8 +85,10 @@ app.get("/callback", (req, res) => {
 	});
 	const headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
-		Authorization:
-			`Basic ${encodeClientCredentials(client.client_id, client.client_secret)}`,
+		Authorization: `Basic ${encodeClientCredentials(
+			client.client_id,
+			client.client_secret,
+		)}`,
 	};
 
 	const tokRes = request("POST", authServer.tokenEndpoint, {
@@ -116,8 +118,7 @@ app.get("/callback", (req, res) => {
 		});
 	} else {
 		res.render("error", {
-			error:
-				`Unable to fetch access token, server response: ${tokRes.statusCode}`,
+			error: `Unable to fetch access token, server response: ${tokRes.statusCode}`,
 		});
 	}
 });
@@ -137,19 +138,47 @@ app.get("/fetch_resource", (req, res) => {
 		res.render("data", { resource: body });
 		return;
 	}
-		/*
-		 * Instead of always returning an error like we do here, refresh the access token if we have a refresh token
-		 */
-		console.log(`resource status error code ${resource.statusCode}`);
-		res.render("error", {
-			error: `Unable to fetch resource. Status ${resource.statusCode}`,
-		});
+	/*
+	 * Instead of always returning an error like we do here, refresh the access token if we have a refresh token
+	 */
+	access_token = null;
+	if (refresh_token) {
+		refreshAccessToken(req, res);
+		return;
+	}
+	console.log(`resource status error code ${resource.statusCode}`);
+	res.render("error", {
+		error: `Unable to fetch resource. Status ${resource.statusCode}`,
+	});
 });
 
 const refreshAccessToken = (req, res) => {
+	const form_data = qs.stringify({
+		grant_type: "refresh_token",
+		refresh_token: refresh_token,
+	});
+	console.log("Refreshing token %s", refresh_token);
+	console.log("Using client %s", client);
+	const headers = {
+		"Content-Type": "application/x-www-form-urlencoded",
+		Authorization: `Basic ${encodeClientCredentials(
+			client.client_id,
+			client.client_secret,
+		)}`,
+	};
+	const tokRes = request("POST", authServer.tokenEndpoint, {
+		body: form_data,
+		headers: headers,
+	});
+	const body = JSON.parse(tokRes.getBody());
 	/*
 	 * Use the refresh token to get a new access token
 	 */
+	console.log("Got response", tokRes.statusCode);
+	console.log("Got body", body);
+	access_token = body.access_token;
+	res.redirect("/fetch_resource");
+	return;
 };
 
 const buildUrl = (base, options, hash) => {
@@ -168,7 +197,8 @@ const buildUrl = (base, options, hash) => {
 	return url.format(newUrl);
 };
 
-const encodeClientCredentials = (clientId, clientSecret) => Buffer.from(
+const encodeClientCredentials = (clientId, clientSecret) =>
+	Buffer.from(
 		`${querystring.escape(clientId)}:${querystring.escape(clientSecret)}`,
 	).toString("base64");
 
