@@ -157,8 +157,6 @@ const refreshAccessToken = (req, res) => {
 		grant_type: "refresh_token",
 		refresh_token: refresh_token,
 	});
-	console.log("Refreshing token %s", refresh_token);
-	console.log("Using client %s", client);
 	const headers = {
 		"Content-Type": "application/x-www-form-urlencoded",
 		Authorization: `Basic ${encodeClientCredentials(
@@ -174,8 +172,6 @@ const refreshAccessToken = (req, res) => {
 	/*
 	 * Use the refresh token to get a new access token
 	 */
-	console.log("Got response", tokRes.statusCode);
-	console.log("Got body", body);
 	access_token = body.access_token;
 	res.redirect("/fetch_resource");
 	return;
