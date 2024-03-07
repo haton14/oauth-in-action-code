@@ -26,6 +26,16 @@ const getAccessToken = (req, res, next) => {
 	/*
 	 * Scan for an access token on the incoming request.
 	 */
+	let inToken = null;
+	const auth = req.headers.authorization;
+	if (auth && auth.toLowerCase().indexOf("bearer") === 0) {
+		inToken = auth.slice("bearer ".length);
+	} else if (req.body?.access_token) {
+		// Form-encoded body
+		inToken = req.body.access_token;
+	} else if (req.query?.access_token) {
+		inToken = req.query.access_token;
+	}
 };
 
 app.options("/resource", cors());
