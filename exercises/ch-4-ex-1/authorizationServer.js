@@ -164,7 +164,7 @@ app.post("/approve", (req, res) => {
 			return;
 		}
 		if (query.response_type === "token") {
-			const user = req.body.user;
+			let user = req.body.user;
 
 			const scope = __.filter(__.keys(req.body), (s) =>
 				__.string.startsWith(s, "scope_"),
@@ -181,7 +181,7 @@ app.post("/approve", (req, res) => {
 				return;
 			}
 
-			const user = userInfo[user];
+			user = userInfo[user];
 			if (!user) {
 				console.log("Unknown user %s", user);
 				res.status(500).render("error", { error: `Unknown user ${user}` });
@@ -279,14 +279,16 @@ const generateTokens = (
 };
 
 app.post("/token", (req, res) => {
+	let clientId;
+	let clientSecret;
 	const auth = req.headers.authorization;
 	if (auth) {
 		// check the auth header
 		const clientCredentials = Buffer.from(auth.slice("basic ".length), "base64")
 			.toString()
 			.split(":");
-		const clientId = querystring.unescape(clientCredentials[0]);
-		const clientSecret = querystring.unescape(clientCredentials[1]);
+		clientId = querystring.unescape(clientCredentials[0]);
+		clientSecret = querystring.unescape(clientCredentials[1]);
 	}
 
 	// otherwise, check the post body
@@ -298,8 +300,8 @@ app.post("/token", (req, res) => {
 			return;
 		}
 
-		const clientId = req.body.client_id;
-		const clientSecret = req.body.client_secret;
+		clientId = req.body.client_id;
+		clientSecret = req.body.client_secret;
 	}
 
 	const client = getClient(clientId);
