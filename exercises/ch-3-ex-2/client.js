@@ -173,6 +173,12 @@ const refreshAccessToken = (req, res) => {
 	 * Use the refresh token to get a new access token
 	 */
 	access_token = body.access_token;
+	console.log("refresh token: %s", refresh_token);
+	if (body.refresh_token) {
+		refresh_token = body.refresh_token;
+		console.log("body: %s", body);
+		console.log("refresh token: %s", refresh_token);
+	}
 	res.redirect("/fetch_resource");
 	return;
 };
