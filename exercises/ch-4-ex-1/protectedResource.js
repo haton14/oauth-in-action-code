@@ -36,6 +36,18 @@ const getAccessToken = (req, res, next) => {
 	} else if (req.query?.access_token) {
 		inToken = req.query.access_token;
 	}
+	nosql.one(
+		(token) => token.access_token === inToken,
+		(err, token) => {
+			if (token) {
+				console.log(`We found a matching token: ${inToken}`);
+			} else {
+				console.log("No matching token was found.");
+			}
+			req.access_token = token;
+			next();
+		},
+	);
 };
 
 app.options("/resource", cors());
