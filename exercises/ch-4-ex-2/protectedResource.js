@@ -17,12 +17,12 @@ app.set('json spaces', 4);
 app.use('/', express.static('files/protectedResource'));
 app.use(cors());
 
-var resource = {
+const resource = {
 	"name": "Protected Resource",
 	"description": "This data has been protected by OAuth 2.0"
 };
 
-var getAccessToken = function(req, res, next) {
+const getAccessToken = function(req, res, next) {
 	var inToken = null;
 	var auth = req.headers['authorization'];
 	if (auth && auth.toLowerCase().indexOf('bearer') == 0) {
@@ -49,7 +49,7 @@ var getAccessToken = function(req, res, next) {
 	});
 };
 
-var requireAccessToken = function(req, res, next) {
+const requireAccessToken = function(req, res, next) {
 	if (req.access_token) {
 		next();
 	} else {
