@@ -36,18 +36,20 @@ const getAccessToken = (req, res, next) => {
 	} else if (req.query?.access_token) {
 		inToken = req.query.access_token;
 	}
-	nosql.one(
-		(token) => token.access_token === inToken,
-		(err, token) => {
+	console.log("Incoming token: %s", inToken);
+	nosql.one().make((builder) => {
+		builder.where("access_token", inToken);
+		builder.callback((err, token) => {
 			if (token) {
-				console.log(`We found a matching token: ${inToken}`);
+				console.log("We found a matching token: %s", inToken);
 			} else {
 				console.log("No matching token was found.");
 			}
 			req.access_token = token;
 			next();
-		},
-	);
+			return;
+		});
+	});
 };
 
 app.options("/resource", cors());
@@ -55,10 +57,12 @@ app.options("/resource", cors());
 /*
  * Add the getAccessToken function to this handler
  */
-app.post("/resource", cors(), (req, res) => {
-	/*
-	 * Check to see if the access token was found or not
-	 */
+app.post("/resource", getAccessToken, cors(), (req, res) => {
+	if (req.access_token) {
+		res.json(resource);
+	} else {
+		res.status(401).end();
+	}
 });
 
 const server = app.listen(9002, "localhost", () => {
